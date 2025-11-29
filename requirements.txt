@@ -1,4 +1,3 @@
-marker-pdf[full]
 pylatex
 pillow
 transformers

@@ -1,0 +1,311 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Computer Vision applied to object detection and classification in classrooms\\
+
+}
+\author{\IEEEauthorblockN{Marcos Paulo Somera}
+\IEEEauthorblockA{\textit{Programa de Pós-graduação em Ciência da Computação} \\
+\textit{Universidade Estadual Paulista “Júlio de Mesquita Filho”}\\
+Rio Claro, Brazil \\
+mp.somera@unesp.br}
+}
+
+\maketitle
+
+
+\begin{abstract}
+Real-time object detection and classification are critical components for developing interactive and intelligent classroom environments. This paper presents a comparative analysis of state-of-the-art deep learning models applied to the specific task of identifying common objects within a classroom setting. We implement, train, and evaluate several prominent algorithms, such as YOLO (You Only Look Once) and SSD (Single Shot MultiBox Detector), on a custom dataset of classroom images. The performance of each model is systematically compared based on key metrics, including mean Average Precision (mAP), inference speed, and computational cost. The objective of this study is to identify which algorithm provides the optimal trade-off between accuracy and real-time processing capabilities for this specific application. The findings provide a baseline for future work in classroom automation, resource management, and assistive technologies for education.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Computer Vision, Deep Learning, Object Detection, Classroom Environment, Comparative Analysis
+\end{IEEEkeywords}
+
+% -------------------------------------------------------------------
+% BEGIN INTRODUCTION SECTION
+% -------------------------------------------------------------------
+\section{Introduction}
+\label{sec:introduction}
+
+The integration of smart technologies into educational environments has shown transformative potential for modern pedagogy. Among these technologies, Computer Vision (CV), driven by recent advancements in \textit{Deep Learning}, emerges as a powerful tool for creating more interactive, secure, and responsive classrooms. The ability to identify and classify objects—such as students, desks, books, projectors, and whiteboards—in real-time can enable a wide range of applications, from automated resource management and student engagement analysis to the development of assistive technologies for students with special needs.
+
+The development of "smart classrooms" is an active field of research, integrating advanced hardware and software to enhance the learning environment. Research in this area focuses on automating tasks like attendance, resource management , and real-time monitoring of classroom activities to improve student outcomes The system proposed by Ojo et al.\cite{ojo2022internet}, for example, uses IoT sensors for real-time seat monitoring.
+
+Despite this potential, the effective implementation of CV systems in classrooms faces significant challenges. Object detection models pre-trained on generic datasets (like COCO) often fail to accurately recognize the specific items and dense context of an academic setting. Furthermore, many educational applications require real-time processing (low latency), imposing severe constraints on the computational complexity and inference speed of the algorithms.
+
+This paper addresses this gap by presenting a comparative study of \textit{Deep Learning}-based object detection algorithms applied specifically to the classroom domain. The central objective is to evaluate and compare the performance of state-of-the-art architectures, notably from the YOLO (\textit{You Only Look Once}) and SSD (\textit{Single Shot MultiBox Detector}) families, trained on a custom dataset of school environments. The comparison is focused on finding the optimal trade-off between detection accuracy, measured by metrics such as \textit{mean Average Precision} (mAP), and inference speed (FPS - \textit{Frames Per Second}).
+
+The remainder of this document is organized as follows: Section II details the specific Objectives of this study. Section III presents the Theoretical Background on the object detection algorithms used. Section IV describes the Methodology, including data collection and the training process. Sections V and VI present the Experiments and the Results obtained, respectively. Finally, Section VII concludes the paper and suggests directions for Future Work.
+% -------------------------------------------------------------------
+% END INTRODUCTION SECTION
+% -------------------------------------------------------------------
+
+% -------------------------------------------------------------------
+% BEGIN OBJECTIVES SECTION
+% -------------------------------------------------------------------
+\section{Objectives}
+\label{sec:objectives}
+
+The primary goal of this research is to conduct a comprehensive comparative analysis of deep learning models to determine the most effective solution for real-time object detection and classification within classroom environments.
+
+To achieve this main goal, the following specific objectives are defined:
+
+\begin{itemize}
+    \item To prepare and process a specialized image dataset suitable for training models to recognize specific classroom objects.
+    
+    \item To implement and train several state-of-the-art object detection algorithms, focusing on prominent architectures such as the YOLO (You Only Look Once) and SSD (Single Shot MultiBox Detector) families.
+    
+    \item To systematically evaluate the performance of each trained model using standard computer vision metrics, primarily mean Average Precision (mAP) for accuracy and Frames Per Second (FPS) for inference speed.
+    
+    \item To analyze the resulting data to identify the optimal algorithm that provides the best trade-off between accuracy, speed, and computational efficiency for this practical application.
+\end{itemize}
+% -------------------------------------------------------------------
+% END OBJECTIVES SECTION
+% -------------------------------------------------------------------
+% -------------------------------------------------------------------
+% BEGIN REVISED THEORETICAL BACKGROUND SECTION
+% -------------------------------------------------------------------
+\section{Theoretical Background}
+\label{sec:background}
+
+This section reviews the principles of the object detection models being compared and the metrics used for their evaluation. This study focuses on one-stage detectors, which are renowned for their balance of speed and accuracy, making them suitable for real-time analysis.
+
+\subsection{YOLOv8}
+The YOLO (You Only Look Once) family of models reframes object detection as a single regression problem, processing the entire image at once. \textbf{YOLOv8} represents a state-of-the-art evolution in this family. It incorporates numerous architectural advancements over its predecessors, including an anchor-free design and a more efficient network backbone. This results in exceptional performance, maintaining very high inference speeds (FPS) while pushing the boundaries of accuracy (mAP) for real-time detectors.
+
+\subsection{SSD (Single Shot MultiBox Detector)}
+The SSD architecture was a pioneering one-stage detector that introduced the use of multi-scale feature maps. SSD attaches detectors to several feature maps at different layers of a base network. This allows it to detect objects of various sizes more effectively—using lower-resolution feature maps for large objects and high-resolution feature maps for small objects. The classic implementation, and the one used in this study, employs a \textbf{VGG16} backbone, which, while older, is a powerful and well-understood feature extractor.
+
+\subsection{RetinaNet with FPN}
+RetinaNet is a high-performance one-stage detector designed specifically to address the extreme class imbalance between foreground objects and the background, which was a primary weakness of one-stage detectors.
+
+Its key innovation is the \textbf{Focal Loss} function. Focal Loss is a dynamically scaled cross-entropy loss that down-weights the loss contribution from easy-to-classify background examples. This allows the model to focus its training on hard-to-classify (and often rarer) objects, leading to accuracy on par with two-stage detectors.
+
+As implemented in this paper, RetinaNet uses a \textbf{ResNet-50} backbone combined with a \textbf{Feature Pyramid Network (FPN)}. The FPN builds a rich, multi-scale feature pyramid, allowing the detector to make predictions on different levels, which provides high accuracy for objects of various sizes.
+
+\subsection{Evaluation Metrics}
+\label{sec:metrics}
+
+To conduct a fair comparison between the models, we rely on standardized evaluation metrics, as prescribed in academic literature.
+
+\subsubsection{Accuracy: mean Average Precision (mAP)}
+The standard metric for detection accuracy is the mean Average Precision (mAP)...
+
+\subsubsection{Speed: Frames Per Second (FPS)}
+For real-time applications, detection speed is as critical as accuracy...
+
+\subsubsection{Efficiency: Latency, MParams, and GFLOPS}
+Beyond raw speed, a model's efficiency is critical for deployment. We measure this using three metrics:
+\begin{itemize}
+    \item \textbf{Latency:} Measured in milliseconds (ms), latency is the precise time taken for the model to perform a single forward pass (inference) on one image. It is a more granular measure of speed than FPS.
+    
+    \item \textbf{MParams (Millions of Parameters):} This metric represents the total number of learnable parameters in the model. A lower parameter count generally leads to a smaller model size on disk and lower memory consumption.
+    
+    \item \textbf{GFLOPS (Giga Floating-Point Operations):} This value quantifies the computational complexity of a model. It measures the total number of floating-point operations required for a single forward pass, indicating the theoretical processing load the model places on the hardware (GPU/CPU).
+\end{itemize}
+
+% -------------------------------------------------------------------
+% END REVISED THEORETICAL BACKGROUND SECTION
+% -------------------------------------------------------------------
+% -------------------------------------------------------------------
+% BEGIN METHODOLOGY SECTION
+% -------------------------------------------------------------------
+\section{Methodology}
+\label{sec:methodology}
+
+This section describes the practical steps taken to implement and evaluate the object detection models. The methodology is divided into dataset sourcing and preparation, model configuration, and the evaluation protocol. The complete workflow of this study is illustrated in Fig.~\ref{fig:workflow}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=3.4in]{process_flowchart.png} 
+    \caption{The overall workflow of our comparative study, from data sourcing and preparation to model training and evaluation}
+    \label{fig:workflow}
+\end{figure}
+
+\subsection{Dataset Sourcing and Preparation}
+Instead of creating a new dataset from scratch, we utilized the large-scale \textbf{Open Images Dataset V4} \cite{OpenImages}. This public dataset contains millions of images with pre-existing, verified bounding box annotations for hundreds of object classes\cite{OpenImagesSegmentation}. These annotations were generated using advanced interactive segmentation methods, ensuring high quality
+
+Our preparation process focused on curating a relevant subset of these images:
+\begin{enumerate}
+    \item \textbf{Class Definition:} We first identified a list of object classes relevant to a classroom environment, such as: \textit{backpacks}, \textit{books} and \textit{pencil cases}
+    
+    \item \textbf{Data Sourcing:} We downloaded all images from the Open Images dataset that contained verified annotations for our selected classes. It is important to note that these images are general-purpose and \textit{not} exclusively from classroom environments (e.g., an image of a "book" could be from a library, office, or home).
+    
+    \item \textbf{Label Conversion:} The downloaded annotations were provided in the Open Images format. We processed and converted these pre-existing labels into the  YOLO and PASCAL VOC format required by our models.
+\end{enumerate}
+The resulting curated dataset, containing 1217 images, was then split into training (80\%), validation (10\%), and test (10\%) sets to ensure the models are evaluated on unseen data.
+
+
+\subsection{Model Selection and Implementation}
+Based on the theoretical background, we selected three prominent one-stage detectors to compare:
+\begin{itemize}
+    \item \textbf{YOLOv8:} A state-of-the-art model from the YOLO family, known for its exceptional speed and high accuracy, implemented in PyTorch.
+    
+    \item \textbf{SSD-VGG16:} The classic SSD architecture utilizing a VGG16 backbone. This serves as a strong, foundational baseline for one-stage, multi-scale detection.
+    
+    \item \textbf{RetinaNet-ResNet50:} A high-accuracy detector using a ResNet-50 backbone with a Feature Pyramid Network (FPN) and Focal Loss, representing the solution to the class imbalance problem.
+\end{itemize}
+
+
+
+\subsection{Experimental Setup and Training}
+All models were trained using pre-trained weights on the \textbf{prepared dataset}. The training was conducted on a workstation equipped with a NVIDIA GeForce GTX 1660 GPU.
+
+Key training hyperparameters were kept consistent where possible:
+\begin{itemize}
+    \item \textbf{Optimizer:} Stochastic Gradient Descent
+    \item \textbf{Learning Rate:} 0.001 
+    \item \textbf{Batch Size:} 4
+    \item \textbf{Epochs:} 50
+\end{itemize}
+
+\subsection{Evaluation Protocol}
+To evaluate the trained models, we used the reserved test set. The performance was measured based on our primary objectives, covering accuracy, speed, and efficiency.
+\begin{enumerate}
+    \item \textbf{Accuracy (mAP):} The mean Average Precision (mAP) was calculated at an IoU threshold of 0.5 (mAP@.50).
+    
+    \item \textbf{Speed (FPS \& Latency):} The inference speed was measured in Frames Per Second (FPS) on the same hardware. We also measured the average \textit{Latency} in milliseconds (ms) per image.
+    
+    \item \textbf{Efficiency (MParams \& GFLOPS):} We analyzed the computational cost of each model by comparing their total number of \textit{Parameters (MParams)} and their theoretical operational load (\textit{GFLOPS}).
+\end{enumerate}
+% -------------------------------------------------------------------
+% END METHODOLOGY SECTION
+% -------------------------------------------------------------------
+% -------------------------------------------------------------------
+% BEGIN EXPERIMENTS SECTION
+% -------------------------------------------------------------------
+\section{Experiments}
+\label{sec:experiments}
+
+This section details the environment and the execution of the comparative study. The experiments were designed to fairly and accurately measure the performance of the three selected models based on the protocol defined in the methodology.
+
+\subsection{Experimental Setup}
+To ensure reproducible results, all training and evaluation experiments were conducted on a single, consistent hardware and software platform.
+\begin{itemize}
+    \item \textbf{Hardware:} The workstation was equipped with an NVIDIA GeForce GTX 1660 GPU with 6GB of VRAM, a AMD Ryzen 7 5700X 8-Core Processor CPU, and 16GB of system RAM.
+    
+    \item \textbf{Software:} The operating system used was Windows 10 . The models were implemented using PyTorch 2.7.1 with CUDA 11.8
+\end{itemize}
+
+\subsection{Execution of Training and Evaluation}
+The three selected models (YOLOv8, SSD-VGG16, and RetinaNet-ResNet50) were trained on the curated Open Images dataset as described in Section \ref{sec:methodology}. The training hyperparameters (learning rate, batch size, epochs) were kept consistent.
+
+Following the completion of training, each model was subjected to the evaluation protocol on the reserved test set.
+\begin{enumerate}
+    \item \textbf{Accuracy Measurement:} The mAP@.50 was computed for each model against the test set's ground-truth annotations.
+    
+    \item \textbf{Speed Measurement:} To benchmark FPS and Latency, we ran inference on all images in the test set. The latency (ms) for each model was averaged after an initial warm-up period to ensure stable and accurate readings.
+    
+    \item \textbf{Efficiency Measurement:} The MParams and GFLOPS for each model were calculated by analyzing the final model architecture. These values represent the model's static complexity and theoretical computational load, respectively.
+\end{enumerate}
+
+The quantitative data gathered from these experiments are presented and analyzed in the following section.
+% -------------------------------------------------------------------
+% END EXPERIMENTS SECTION
+% -------------------------------------------------------------------
+% -------------------------------------------------------------------
+% BEGIN RESULTS SECTION
+% -------------------------------------------------------------------
+\section{Results}
+\label{sec:results}
+
+The experiments described in Section \ref{sec:experiments} were executed to gather performance data for the three selected models: YOLOv8, SSD-VGG16, and RetinaNet-ResNet50. The comprehensive results, comparing all models across our defined metrics, are presented in Table~\ref{tab:comparison_results}.
+
+% --- INÍCIO DA TABELA DE RESULTADOS (COM SEUS DADOS) ---
+% Este é o seu código \begin{tabular} integrado com
+% a formatação correta do template IEEE (caption, label, center, hline).
+\begin{table}[htbp]
+\caption{Comprehensive Performance Comparison of Detection Models}
+\label{tab:comparison_results}
+\begin{center}
+% O \arraystretch torna a tabela um pouco mais fácil de ler
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Model} & \textbf{mAP@.50} & \textbf{FPS} & \textbf{Latency (ms)} & \textbf{MParams} & \textbf{GFLOPS} \\
+\hline
+YOLOv8 & 0.5378 & 82.25 & 12.16 & 3.01 & 1.02 \\
+\hline
+SSD-VGG16 & 0.4686 & 51.15 & 19.56 & 24.01 & 30.53 \\
+\hline
+RetinaNet-ResNet50 & 0.4472 & 12.84 & 77.9 & 32.19 & 127.19 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+% --- FIM DA TABELA DE RESULTADOS ---
+
+\subsection{Objective Findings}
+As demonstrated in Table~\ref{tab:comparison_results}, the data reveals a striking outcome. The YOLOv8 model consistently outperformed the other architectures in every metric evaluated.
+
+\begin{itemize}
+    \item \textbf{Accuracy (mAP):} The \textbf{YOLOv8} model achieved the highest mAP score of 0.5378, indicating the most reliable detections. The SSD-VGG16 followed with 0.4686, while the RetinaNet-ResNet50 had the lowest accuracy at 0.4472.
+    
+    \item \textbf{Speed (FPS/Latency):} The \textbf{YOLOv8} model demonstrated vastly superior real-time performance, achieving 82.25 FPS with only 12.16 ms of latency. RetinaNet was the slowest, with 12.84 FPS and a high latency of 77.9 ms.
+    
+    \item \textbf{Efficiency (MParams/GFLOPS):} In terms of model efficiency, \textbf{YOLOv8} proved to be the lightest and most efficient model by a significant margin, with only 3.01 MParams and 1.02 GFLOPS. RetinaNet-ResNet50 was the most computationally expensive, requiring 32.19 MParams and 127.19 GFLOPS.
+\end{itemize}
+
+A full analysis and discussion of these results are presented in the following section.
+% -------------------------------------------------------------------
+% END RESULTS SECTION
+% -------------------------------------------------------------------
+% -------------------------------------------------------------------
+% COMEÇO DA SEÇÃO DE DISCUSSÃO
+% -------------------------------------------------------------------
+\section{Discussion}
+\label{sec:discussion}
+
+The results presented in Table~\ref{tab:comparison_results} are decisive, showing YOLOv8 outperforming both SSD and RetinaNet in every metric. This section provides an analysis of these outcomes, contextualizing them with the original design principles of each architecture.
+
+\subsection{Analysis of YOLOv8's Superiority}
+YOLOv8's dominance in both speed (82.25 FPS) and accuracy (0.5378 mAP) aligns with its modern design. As noted in recent reviews, the evolution of YOLO has consistently focused on optimizing the balance between speed and efficiency. YOLOv8 incorporates an advanced \textbf{anchor-free detection head}  and an enhanced \textbf{CSPDarknet backbone}\cite{hussain2024yolov5}. This anchor-free design simplifies the model architecture and reduces the computational overhead associated with calculating predefined anchor boxes, which is a core component of the SSD model. This streamlined design directly explains its low parameter count (3.01 MParams) and minimal GFLOPS (1.02), making it an ideal "go-to detector for real-time vision"\cite{hussain2024yolov5}.
+
+\subsection{Why RetinaNet Underperformed}
+The most surprising result was the poor performance of RetinaNet, which had the lowest mAP (0.4472) and, by far, the highest latency (77.9 ms). The fundamental innovation of RetinaNet is not the architecture itself (a ResNet-50-FPN backbone), but its \textbf{Focal Loss} function \cite{lin2017focal}. The Focal Loss was designed specifically to solve the problem of "extreme foreground-background class imbalance" found in dense detectors. It works by "down-weighting the loss assigned to well-classified examples" (i.e., easy background negatives).
+
+Our methodology, however, used a small, curated dataset of 1217 images from Open Images. It is highly probable that our dataset did not contain the "vast numbers of easy negatives" that Focal Loss was designed to solve\cite{lin2017focal}. As a result, we paid the significant computational price of the heavy ResNet-50-FPN backbone without gaining the primary benefit of its unique loss function, leading to the worst performance-to-cost ratio in our study.
+
+\subsection{The Role of SSD as a Baseline}
+The SSD-VGG16 performed as a solid, middle-ground baseline. The original SSD paper highlights its key contribution as the "use of multiple feature maps with different resolutions to naturally handle objects of various sizes"\cite{liu2016ssd}. This was a revolutionary one-stage approach that, for the first time, achieved accuracy competitive with two-stage methods like Faster R-CNN. However, our results show that this 2016-era architecture, which relies on a VGG16 base and predefined "default boxes", has been surpassed in both efficiency and accuracy by modern, anchor-free designs like YOLOv8.
+% -------------------------------------------------------------------
+% FIM DA SEÇÃO DE DISCUSSÃO
+% -------------------------------------------------------------------
+% -------------------------------------------------------------------
+% BEGIN CONCLUSION AND FUTURE WORK SECTION
+% -------------------------------------------------------------------
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+\subsection{Conclusion}
+This paper presented a rigorous comparative analysis of three prominent one-stage object detectors—YOLOv8, SSD-VGG16, and RetinaNet-ResNet50—for the task of general object detection relevant to classroom environments. The models were evaluated on a curated dataset from Open Images across a comprehensive set of metrics, including accuracy (mAP), speed (FPS, Latency), and computational efficiency (MParams, GFLOPS).
+
+The results were decisive: the \textbf{YOLOv8} model demonstrated overwhelming superiority in \textit{every single metric}. It was not only the most accurate (highest mAP) but also the fastest (highest FPS) and most efficient (lowest Latency, MParams, and GFLOPS). The classic SSD-VGG16 offered a moderate balance, while the RetinaNet-ResNet50, despite its theoretical advantages in handling class imbalance, proved to be too slow and computationally heavy for this real-time application, without providing a corresponding increase in accuracy.
+
+The findings strongly suggest that modern, anchor-free architectures like YOLOv8 represent the current state-of-the-art and are the most viable starting point for developing real-world computer vision applications for classrooms.
+
+\subsection{Future Work}
+While the results are clear, this study highlights several limitations that pave the way for future research.
+
+First, the models were trained on a curated subset of the Open Images dataset totaling only \textbf{1217 images}. This relatively small dataset size limits the models' ability to generalize and may be a factor in the modest mAP scores. A critical next step is to \textbf{significantly expand this dataset} with more diverse examples. Furthermore, \textbf{fine-tuning the winning YOLOv8 model} on a new, custom dataset captured from the target classroom environments would likely improve its accuracy under real-world lighting and occlusion conditions.
+
+Second, our speed benchmarks were conducted on a high-performance GPU. A key area for future work is to \textbf{deploy and benchmark these models on embedded hardware} (e.g., NVIDIA Jetson Nano or Raspberry Pi) that would realistically be used in a school setting.
+
+Finally, this comparison focused on three specific architectures. This study should be expanded to \textbf{include a wider range of other state-of-the-art models} (such as the EfficientDet family or other transformer-based detectors) to continuously track the optimal solution for this evolving application.
+% -------------------------------------------------------------------
+% END CONCLUSION AND FUTURE WORK SECTION
+% -------------------------------------------------------------------
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv, bibfile}
+\end{document}
