@@ -1,5 +1,5 @@
 from src.extractor import LatexIngestor
-from src.summarizer import SlideSummarizer
+from src.summarizer import summarizers_dict
 from src.to_Beamer import BeamerBuilder
 
 import subprocess
@@ -9,14 +9,12 @@ import subprocess
 #==============================================================================================================
 # CUSTOM CLASSES FOR RUNNING THE PIPELINE
 class Beamifier_Pipeline():
-    # TODO: deixar compile aqui ou no run?
-    def __init__(self, model_code=0, api_key=None, _compile=False, remove_trash=True):
-        self.model_code = model_code
+    def __init__(self, model, device=None, api_key=None, _compile=False, remove_trash=True):
+        if isinstance(model,str):
+            model = summarizers_dict[model]
+        self.summarizer = model(device=device, api_key=api_key)
         self.compile = _compile
         self.remove_trash = remove_trash
-
-        self.api_key = api_key
-        self.summarizer = SlideSummarizer(model_code)
         
     def run(self, input_path, output_path=None):
         if output_path is None:
@@ -24,53 +22,50 @@ class Beamifier_Pipeline():
         
         # Parser
         print("=== 1. Lendo e Parseando LaTeX ===")
-        ingestor = LatexIngestor()
-        texto_full = ingestor.carregar_projeto_recursivo(input_path)
+        extractor = LatexIngestor()
+        full_text = extractor.carregar_projeto_recursivo(input_path)
 
-        secoes = ingestor.extrair_secoes(texto_full)
-        metadados = ingestor.extrair_metadados(texto_full)
+        sections = extractor.extrair_secoes(full_text)
+        metadata = extractor.extrair_metadados(full_text)
 
-        print(f"-> Título: {metadados['titulo']}")
-        print(f"-> Seções: {len(secoes)}")
+        print(f"-> Título: {metadata['titulo']}")
+        print(f"-> Seções: {len(sections)}")
 
         # Resumos
         print("\n=== 2. Inicializando Engine de IA ===")
         
 
-        slides_prontos = []
+        slides = []
         print("\n=== 3. Gerando Resumos ===")
-        for i, secao in enumerate(secoes):
-            print(f"Processando [{i+1}/{len(secoes)}]: {secao['titulo']}...")
-            bullet_points = self.summarizer.gerar_topicos(secao['conteudo'], self.api_key)
-            slides_prontos.append({
-                "titulo": secao['titulo'],
+        for i, section in enumerate(sections):
+            print(f"Processando [{i+1}/{len(sections)}]: {section['titulo']}...")
+            bullet_points = self.summarizer.summarize(section['conteudo'])
+            slides.append({
+                "titulo": section['titulo'],
                 "conteudo": bullet_points,
-                "assets": secao.get("assets", [])
+                "assets": section.get("assets", [])
             })
 
         # Geracao de beamer
         print("\n=== 4. Montando Beamer final ===")
         builder = BeamerBuilder()
 
-        caminho_final = builder.montar_apresentacao_completa(
-            slides_prontos, 
+        final_path = builder.montar_apresentacao_completa(
+            slides, 
             output_path, 
-            metadados=metadados
+            metadados=metadata
         )
 
-        print(f"\n[SUCESSO] Arquivo .tex gerado em: {caminho_final}")
+        print(f"\n[SUCESSO] Arquivo .tex gerado em: {final_path}")
 
         if self.compile:
             print("\n=== 5. Compilando PDF Beamer ===")
-            #comando = ["pdflatex", "-interaction=nonstopmode", 
-            #            f'-output-directory={"/".join(output_path.split("/")[:-1])}',
-            #            f'{caminho_final}']
-            comando = ["pdflatex", "-interaction=batchmode", 
+            command = ["pdflatex", "-interaction=batchmode", 
                         f'-output-directory={"/".join(output_path.split("/")[:-1])}',
-                        f'{caminho_final}']
-            subprocess.run(comando)
+                        f'{final_path}']
+            subprocess.run(command)
             if self.remove_trash:
                 for extension in ["aux", "log", "nav", "out", "snm", "toc"]:
-                    comando = ["rm", f'{output_path[:-4]+"."+extension}']
-                    subprocess.run(comando)
+                    command = ["rm", f'{output_path[:-4]+"."+extension}']
+                    subprocess.run(command)
 #==============================================================================================================

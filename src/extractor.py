@@ -144,16 +144,4 @@ class LatexIngestor:
 
 
 if __name__=='__main__':
-    ingestor = LatexIngestor()
-    texto_full = ingestor.carregar_projeto_recursivo("example/marcos.tex")
-
-    secoes = ingestor.extrair_secoes(texto_full)
-    metadados = ingestor.extrair_metadados(texto_full)
-
-    # Debbg
-    with open("example/extractor-metadados.txt",'w') as f:
-        for key, value in metadados.items():
-            f.write(f'{key}: {value}\n')
-    with open("example/extractor-secoes.txt",'w') as f:
-        for i, secao in enumerate(secoes):
-            f.write(f'SECAO-{i}:\ntitulo:{secao['titulo']}\nconteudo:{secao['conteudo']}\nassets:{secao['assets']}\n')
+    pass

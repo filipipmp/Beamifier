@@ -3,6 +3,7 @@ import re  # Adicionado para manipulação avançada de strings
 
 class BeamerBuilder:
     def __init__(self):
+        # TODO: adicionar escolha de tema
         # Reintroduzimos o adjustbox para redimensionar TABELAS (tabular) especificamente
         self.base_preambulo = r"""
             \documentclass{beamer}
@@ -106,7 +107,7 @@ class BeamerBuilder:
             
         return slides_code
 
-    def montar_apresentacao_completa(self, lista_slides, output_path="apresentacao_gerada.tex", metadados=None):
+    def montar_apresentacao_completa(self, lista_slides, output_path="output.tex", metadados=None):
         if metadados is None:
             metadados = {"titulo": "Apresentação", "autor": ""}
             
