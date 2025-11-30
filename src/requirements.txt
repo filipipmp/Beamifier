@@ -1,0 +1,4 @@
+pylatex
+transformers
+torch
+google-generativeai

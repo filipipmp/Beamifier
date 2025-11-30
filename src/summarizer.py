@@ -1,5 +1,5 @@
 try:
-    from transformers import pipeline
+    from transformers import pipeline, AutoTokenizer
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -31,10 +31,12 @@ class SlideSummarizer:
                 self.device = 0  # GPU
             else:
                 self.device = -1  # CPU
-            
+            self.device=-1
+
+
             if TRANSFORMERS_AVAILABLE:
                 try:
-                    self.summarizer = pipeline("summarization", model=self.model_name, device=self.device)
+                    self.summarizer = pipeline("summarization", model=self.model_name, device=self.device, truncation=True)
                 except Exception as e:
                     print(f"[ERRO FATAL] Falha ao carregar modelo: {e}")
                     self.summarizer = None
@@ -64,10 +66,7 @@ class SlideSummarizer:
                 return "facebook/bart-large-cnn" #default
 
     def gerar_topicos(self, texto_longo, chave_api=None, max_length: int =130, min_length: int =30):
-        if chave_api:
-            if not GEMINI_AVAILABLE:
-                print("[ERRO] Biblioteca 'google-generativeai' não instalada. Use 'pip install google-generativeai'.")
-                return ["ERRO: API do Gemini não disponível."]
+        if self.model_name.split("/")[0] == "API":
             return self.gerar_topicos_remote(texto_longo, chave_api, max_length, min_length)
         else:
             return self.gerar_topicos_local(texto_longo, max_length, min_length)
@@ -95,14 +94,14 @@ class SlideSummarizer:
         if dynamic_min < 10: dynamic_min = 10
 
         try:
-            # Tenta gerar o resumo
-            # truncation=True é essencial
+            # Linha adicionada pq o bart decidiu se fazer de dificil
+            self.summarizer.tokenizer.model_max_length = dynamic_max
             resumo_raw = self.summarizer(
                 texto_longo, 
                 max_length=dynamic_max, 
                 min_length=dynamic_min, 
                 do_sample=False, 
-                truncation=True
+                truncation=True,
             )
             texto_resumido = resumo_raw[0]['summary_text']
             
@@ -172,3 +171,8 @@ class SlideSummarizer:
         except Exception as e:
             print(f"   [AVISO] Erro na API do Gemini. Detalhe: {e}") 
             return ["ERRO: Falha ao chamar a API do Gemini."]
+
+
+
+if __name__=='__main__':
+    pass

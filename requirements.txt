@@ -1,4 +1,0 @@
-pylatex
-pillow
-transformers
-torch

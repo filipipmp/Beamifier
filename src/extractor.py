@@ -4,7 +4,7 @@ import re
 
 #==============================================================================================================
 # CUSTOM CLASSES FOR EXTRACTING USEFUL TEXT FROM .tex
-
+# Baseado em expressoes regulares
 class LatexIngestor:
     def __init__(self):
         self.secoes = []
@@ -113,6 +113,7 @@ class LatexIngestor:
         partes = re.split(r'\\section\{([^}]*)\}', corpo)
         resultado = []
         
+        # TODO: deixamos assim?
         # Processa contexto (abstract/intro)
         if len(partes[0].strip()) > 50:
             texto_conteudo, assets = self._extrair_e_remover_assets(partes[0].strip())
