@@ -1,0 +1,5 @@
+#Python 3.12.3
+pylatex==1.4.2
+transformers==4.57.3
+torch==2.9.1
+google-generativeai==0.8.5
